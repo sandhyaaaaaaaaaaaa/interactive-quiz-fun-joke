@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz & Joke Fetcher</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc3dc;
+            --light-purple: #e6e6fa; /* Light purple background */
+            --dark-purple: #d8bfd8; /* Darker shade for shine effect */
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-purple), var(--dark-purple));
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            position: relative;
+        }
+
+        .question {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option {
+            background-color: var(--light-purple);
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option:hover {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .option.selected {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .option.correct {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .option.wrong {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .quiz-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .quiz-feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .score-display {
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2rem;
+        }
+
+        /* Joke Styles */
+        .joke-container {
+            margin-top: 30px;
+        }
+
+        .joke {
+            background-color: var(--light-purple);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+
+            .options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .quiz-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Interactive Quiz & Joke Fetcher</h1>
+        <p>Test your knowledge and enjoy some jokes!</p>
+    </header>
+
+    <div class="container">
+        <section class="section quiz-container">
+            <h2>Geography Quiz</h2>
+            <div id="quiz-content">
+                <div class="question" id="question">Loading questions...</div>
+                <div class="options" id="options"></div>
+                <div class="quiz-feedback" id="feedback"></div>
+                <div class="quiz-controls">
+                    <button class="btn-primary" id="prev-btn" disabled>Previous</button>
+                    <button class="btn-primary" id="next-btn">Next</button>
+                </div>
+                <div class="score-display" id="score">Score: 0/0</div>
+            </div>
+        </section>
+
+        <section class="section joke-container">
+            <h2>Random Joke</h2>
+            <button class="btn-primary" id="joke-btn">Get a Joke</button>
+            <div class="joke" id="joke">Click the button to fetch a joke!</div>
+        </section>
+    </div>
+
+    <script>
+        // Quiz Data
+        const quizData = [
+            {
+                question: "Which is the largest ocean on Earth?",
+                options: ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+                correct: 3
+            },
+            {
+                question: "What is the capital of Australia?",
+                options: ["Sydney", "Melbourne", "Canberra", "Perth"],
+                correct: 2
+            },
+            {
+                question: "Which continent has the most countries?",
+                options: ["Asia", "Africa", "Europe", "North America"],
+                correct: 1
+            },
+            {
+                question: "Which river flows through Paris?",
+                options: ["Danube", "Rhine", "Seine", "Thames"],
+                correct: 2
+            },
+            {
+                question: "Which country has the longest coastline?",
+                options: ["Russia", "Canada", "Australia", "Indonesia"],
+                correct: 1
+            }
+        ];
+
+        // Quiz Variables
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedOption = null;
+        let quizFinished = false;
+
+        // DOM Elements
+        const questionEl = document.getElementById('question');
+        const optionsEl = document.getElementById('options');
+        const feedbackEl = document.getElementById('feedback');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreEl = document.getElementById('score');
+
+        // Initialize Quiz
+        function loadQuestion() {
+            const quiz = quizData[currentQuestion];
+            questionEl.textContent = quiz.question;
+            
+            optionsEl.innerHTML = '';
+            quiz.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.classList.add('option');
+                optionEl.textContent = option;
+                optionEl.addEventListener('click', () => selectOption(index));
+                optionsEl.appendChild(optionEl);
+            });
+
+            prevBtn.disabled = currentQuestion === 0;
+            nextBtn.textContent = currentQuestion === quizData.length - 1 ? 'Finish' : 'Next';
+            
+            updateScore();
+        }
+
+        // Handle Option Selection
+        function selectOption(index) {
+            // Reset previous selection
+            if (selectedOption !== null) {
+                optionsEl.children[selectedOption].classList.remove('selected');
+            }
+            
+            selectedOption = index;
+            optionsEl.children[index].classList.add('selected');
+            checkAnswer();
+        }
+
+        // Check Answer
+        function checkAnswer() {
+            if (selectedOption === null) return;
+            
+            const quiz = quizData[currentQuestion];
+            const isCorrect = selectedOption === quiz.correct;
+            
+            // Clear previous feedback
+            feedbackEl.style.display = 'none';
+            
+            // Update classes
+            optionsEl.children[selectedOption].classList.add(isCorrect ? 'correct' : 'wrong');
+            if (quiz.correct !== selectedOption) {
+                optionsEl.children[quiz.correct].classList.add('correct');
+            }
+            
+            // Show feedback
+            feedbackEl.textContent = isCorrect ? 'Correct! Well done!' : `Incorrect. The correct answer is: ${quiz.options[quiz.correct]}`;
+            feedbackEl.style.display = 'block';
+            feedbackEl.style.backgroundColor = isCorrect ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)';
+            feedbackEl.style.color = isCorrect ? 'var(--success-color)' : 'var(--error-color)';
+            
+            // Update score if first time answering correctly
+            if (isCorrect && !optionsEl.children[selectedOption].hasAttribute('data-answered')) {
+                score++;
+                optionsEl.children[selectedOption].setAttribute('data-answered', 'true');
+                updateScore();
+            }
+        }
+
+        // Update Score Display
+        function updateScore() {
+            scoreEl.textContent = `Score: ${score}/${quizData.length}`;
+        }
+
+        // Navigate to Previous Question
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                selectedOption = null;
+                loadQuestion();
+            }
+        }
+
+        // Navigate to Next Question
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                selectedOption = null;
+                loadQuestion();
+            } else {
+                // Quiz finished
+                quizFinished = true;
+                feedbackEl.textContent = `Quiz completed! Your final score is ${score}/${quizData.length}`;
+                feedbackEl.style.display = 'block';
+                feedbackEl.style.backgroundColor = 'rgba(75, 123, 236, 0.1)';
+                feedbackEl.style.color = 'var(--primary-color)';
+                nextBtn.textContent = 'Restart Quiz';
+            }
+        }
+
+        // Reset Quiz
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            selectedOption = null;
+            quizFinished = false;
+            loadQuestion();
+            feedbackEl.style.display = 'none';
+        }
+
+        // Event Listeners for Quiz
+        prevBtn.addEventListener('click', prevQuestion);
+        nextBtn.addEventListener('click', () => {
+            if (quizFinished) {
+                restartQuiz();
+            } else {
+                nextQuestion();
+            }
+        });
+
+        // Initialize Quiz
+        loadQuestion();
+
+        // Joke Fetching Function
+        async function fetchJoke() {
+            try {
+                const response = await fetch('https://official-joke-api.appspot.com/random_joke');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch joke');
+                }
+                const data = await response.json();
+                document.getElementById('joke').textContent = `${data.setup} - ${data.punchline}`;
+            } catch (error) {
+                document.getElementById('joke').textContent = 'Error fetching joke: ' + error.message;
+            }
+        }
+
+        // Joke Button Event Listener
+        document.getElementById('joke-btn').addEventListener('click', fetchJoke);
+    </script>
+</body>
+</html>
